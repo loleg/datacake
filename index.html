@@ -1,0 +1,449 @@
+<!doctype html> 
+<html> 
+<head> 
+<title>datakake</title> 
+
+<script language="JavaScript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>  
+<script type="text/javascript" src="lib/Three.js"></script>
+
+<script type="text/javascript" src="lib/RequestAnimationFrame.js"></script> 
+<script type="text/javascript" src="lib/Stats.js"></script> 
+<script type="text/javascript" src="lib/Detector.js"></script> 
+
+</head> 
+<body> 
+<!-- 
+
+Data Kake
+
+THREE.js by mrdoob is used for WebGL graphics
+SoundManager for the live chemical beats
+ 
+Contact: @loleg http://oleg.utou.ch
+ 
+Creative Commons Attribution 3.0 Unported License
+http://creativecommons.org/licenses/by/3.0/
+-->
+
+<script> 
+
+// grab some data
+
+var layerData = [];
+
+// create three layers
+
+for (var l = 0; l < 3; l++) {
+	var data = [];
+	for (var i = 0; i < 25; i++) {
+		// open data goes here!!!!!!
+		data.push(Math.random());
+	}
+	layerData.push(data);
+}
+
+// load some twitter data
+
+if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+ 
+var container, stats;
+var camera, scene, projector, renderer;
+var uniforms, material, mesh, particleMaterial;
+var timer;
+
+var targetRotation = 0;
+var targetRotationOnMouseDown = 0;
+
+var mouseX = 0;
+var mouseXOnMouseDown = 0;
+
+var windowHalfX = window.innerWidth / 2;
+var windowHalfY = window.innerHeight / 2;
+ 
+var cake, light1, light2, light3;
+
+init();
+animate();
+ 
+function init() {
+ 
+	container = document.createElement( 'div' );
+	container.id = 'gameContainer';
+	document.body.appendChild( container );
+ 
+ 	// -- Setup the camera
+	camera = new THREE.Camera(60, window.innerWidth / window.innerHeight, 1, 10000 );
+	camera.position.y = -100;
+	camera.position.z = 20;
+ 
+	// -- Create objects and add to scene
+	scene = new THREE.Scene();
+	
+	//var generatedTexture = new THREE.Texture( generateTexture() );
+	
+	function addGeometry( geometry, points, spacedPoints, color, x, y, z, rx, ry, rz, s ) {
+	
+		// Material
+		var materials = [ new THREE.MeshLambertMaterial( { color: color, opacity: 0.9 } ) ];
+
+		// 3d shape
+
+		var mesh = new THREE.Mesh( geometry, materials );
+		mesh.position.set( x, y, z - 75 );
+		mesh.rotation.set( rx, ry, rz );
+		mesh.scale.set( s, s, s );
+		scene.addObject( mesh );
+		
+		return mesh;
+				
+	}
+	
+	// Layer cake
+	
+	var layerDepth = 10;
+	var layerColors = [ 0x33ee33, 0xee9999, 0xffee00 ];
+
+	var extrudeSettings = {	amount: layerDepth,  bevelEnabled: false, bevelSegments: 2, steps: 1 }; // bevelSegments: 2, steps: 2 , bevelSegments: 5, bevelSize: 8, bevelThickness:5,
+	
+	for (var i = 0; i < 3; i++) {
+	
+		var circleRadius = 40 - i * 2;
+		var layerColor = layerColors[i];
+
+		// Slice
+
+		var triangleShape = new THREE.Shape();
+		triangleShape.moveTo(  0, 0 );
+		triangleShape.arc( 0, 0, circleRadius, Math.PI*0.05, -Math.PI*0.15, false );
+		triangleShape.lineTo(  0, 0 ); // close path
+
+		var triangle3d = triangleShape.extrude( extrudeSettings );
+		var trianglePoints = triangleShape.createPointsGeometry();
+		var triangleSpacedPoints = triangleShape.createSpacedPointsGeometry();
+		
+		addGeometry( triangle3d, trianglePoints, triangleSpacedPoints, layerColor, 0, 0, 55 + i*layerDepth, 0, 0, 0, 1 );
+		
+		// Cake
+					
+		var arcShape = new THREE.Shape();
+		arcShape.moveTo( 0, 0 );
+		arcShape.arc( 0, 0, circleRadius, Math.PI*0.1, Math.PI*1.9, false );
+		arcShape.lineTo( 0, 0 );
+
+		var arc3d = arcShape.extrude( extrudeSettings );
+		var arcPoints = arcShape.createPointsGeometry();
+		var arcSpacedPoints = arcShape.createSpacedPointsGeometry();
+
+		// 50 - console.log(arc3d.vertices.length);
+		var w = 0;
+		for (var u in arc3d.vertices) {
+			if (arc3d.vertices[u].position.z == 10) {
+				arc3d.vertices[u].position.z += 6 * layerData[i][w++];
+			}
+		}
+		
+		addGeometry( arc3d, arcPoints, arcSpacedPoints, layerColor,  0, 0, 50 + i*layerDepth, 0, 0, 0, 1 );
+		
+	}
+	
+	// Candle
+	
+	var arcShape = new THREE.Shape();
+	arcShape.moveTo( 0, 0 );
+	arcShape.arc( 0, 0, 0.6, 0, Math.PI*2, false );
+	arcShape.lineTo( 0, 0 );
+
+	var arc3d = arcShape.extrude( extrudeSettings );
+	var arcPoints = arcShape.createPointsGeometry();
+	var arcSpacedPoints = arcShape.createSpacedPointsGeometry();
+	
+	extrudeSettings = {	amount: 10,  bevelEnabled: false, bevelSegments: 1, steps: 1 };
+	addGeometry( arc3d, arcPoints, arcSpacedPoints, 0xffffff,  0, 0, 76, 0, 0, 0, 2 );
+	
+	// Lights
+	
+	scene.addLight( new THREE.AmbientLight( 0xcccccc ) );
+	
+	light1 = new THREE.PointLight( 0xff0040, 2, 50 );
+	scene.addLight( light1 );
+
+	light2 = new THREE.PointLight( 0x0040ff, 2, 50 );
+	scene.addLight( light2 );
+
+	light3 = new THREE.PointLight( 0x80ff80, 2, 50 );
+	scene.addLight( light3 );
+				
+ 	// -- Rest of 3D setup
+	projector = new THREE.Projector();
+
+	renderer = new THREE.WebGLRenderer({ antialias: false });
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	container.appendChild( renderer.domElement );
+
+	stats = new Stats();
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.top = '0px';
+	container.appendChild( stats.domElement );
+
+	onWindowResize();
+
+	window.addEventListener( 'resize', onWindowResize, false );
+
+	document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+	document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+	document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+}
+
+//
+
+function onDocumentMouseDown( event ) {
+
+	event.preventDefault();
+
+	document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+	document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+	document.addEventListener( 'mouseout', onDocumentMouseOut, false );
+
+	mouseXOnMouseDown = event.clientX - windowHalfX;
+	targetRotationOnMouseDown = targetRotation;
+}
+
+function onDocumentMouseMove( event ) {
+
+	mouseX = event.clientX - windowHalfX;
+
+	targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.02;
+}
+
+function onDocumentMouseUp( event ) {
+
+	document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+	document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+	document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+}
+
+function onDocumentMouseOut( event ) {
+
+	document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+	document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+	document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+}
+
+function onDocumentTouchStart( event ) {
+
+	if ( event.touches.length == 1 ) {
+
+		event.preventDefault();
+
+		mouseXOnMouseDown = event.touches[ 0 ].pageX - windowHalfX;
+		targetRotationOnMouseDown = targetRotation;
+
+	}
+}
+
+function onDocumentTouchMove( event ) {
+
+	if ( event.touches.length == 1 ) {
+
+		event.preventDefault();
+
+		mouseX = event.touches[ 0 ].pageX - windowHalfX;
+		targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.05;
+
+	}
+}
+
+function onWindowResize( event ) {
+				//uniforms.resolution.value.x = window.innerWidth;
+			//	uniforms.resolution.value.y = window.innerHeight;
+	renderer.setSize( window.innerWidth-5, window.innerHeight-5 );
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+}
+
+function generateTexture() {
+
+	var canvas = document.createElement( 'canvas' );
+	canvas.width = 256;
+	canvas.height = 256;
+
+	var context = canvas.getContext( '2d' );
+	var image = context.getImageData( 0, 0, 256, 256 );
+
+	var x = 0, y = 0;
+
+	for ( var i = 0, j = 0, l = image.data.length; i < l; i += 4, j ++ ) {
+
+		x = j % 256;
+		y = x == 0 ? y + 1 : y;
+
+		image.data[ i + 2 ] = Math.floor( x ^ y );
+		image.data[ i + 3 ] = 255;
+
+	}
+
+	context.putImageData( image, 0, 0 );
+
+	return canvas;
+
+}
+
+// https://gist.github.com/1229476 - Usage:
+// var txt = alignPlane(createText2D('String', 'red', 'Verdana', 64), THREE.RightAlign, THREE.BottomAlign);
+// scene.addChild(txt);
+
+function createTextCanvas(text, color, font, size) {
+	size = size || 24;
+	var canvas = document.createElement('canvas');
+	var ctx = canvas.getContext('2d');
+	var fontStr = (font || 'Arial') + ' ' + (size +'px');
+	ctx.font = fontStr; 
+	var w = ctx.measureText(text).width;
+	var h = Math.ceil(size*1.25);
+	canvas.width = w;
+	canvas.height = h;
+	ctx.font = fontStr;
+	ctx.fillStyle = color || 'black';
+	ctx.fillText(text, 0, size);
+	return canvas;
+}
+
+function createText2D(text, color, font, size, segW, segH) {
+	var canvas = createTextCanvas(text, color, font, size);
+	var plane = new THREE.PlaneGeometry(canvas.width, canvas.height, segW, segH);
+	var tex = new THREE.Texture(canvas);
+	tex.needsUpdate = true;
+	var planeMat = new THREE.MeshBasicMaterial({
+	map: tex, color: 0xffffff, transparent: true
+	});
+	var mesh = new THREE.Mesh(plane, planeMat);
+	mesh.doubleSided = true;
+	return mesh;
+}
+
+THREE.LeftAlign = 1;
+THREE.CenterAlign = 0;
+THREE.RightAlign = -1;
+THREE.TopAlign = -1;
+THREE.BottomAlign = 1;
+
+function alignPlane(plane, horizontalAlign, verticalAlign) {
+	var obj = new THREE.Object3D();
+	var u = plane.geometry.vertices[0].position;
+	var v = plane.geometry.vertices[plane.geometry.vertices.length-1].position;
+	var width = Math.abs(u.x - v.x);
+	var height = Math.abs(u.y - v.y);
+	plane.position.x = width/2 * horizontalAlign;
+	plane.position.y = height/2 * verticalAlign;
+	obj.addChild(plane);
+	return obj;
+}
+ 
+function animate() {
+ 
+	requestAnimationFrame( animate );
+
+	render();
+	stats.update();
+
+}
+
+function render() {
+//uniforms.time.value += 0.05;
+	timer = -new Date().getTime() * 0.002; 
+	for (var i = 0; i < scene.children.length; i++) {
+		scene.children[i].rotation.z = ( targetRotation - scene.children[i].rotation.y ) * 0.5;
+	}
+	
+	light1.position.x = Math.sin( timer * 0.7 ) * 30;
+	light1.position.y = Math.cos( timer * 0.5 ) * 40;
+	light1.position.z = Math.cos( timer * 0.3 ) * 30;
+
+	light2.position.x = Math.cos( timer * 0.3 ) * 30;
+	light2.position.y = Math.sin( timer * 0.5 ) * 40;
+	light2.position.z = Math.sin( timer * 0.7 ) * 30;
+
+	light3.position.x = Math.sin( timer * 0.7 ) * 30;
+	light3.position.y = Math.cos( timer * 0.3 ) * 40;
+	light3.position.z = Math.sin( timer * 0.5 ) * 30;
+	
+	renderer.render( scene, camera );
+
+}
+ 
+</script>
+<h1>"LET THERE BE DATAKAKE"</h1>
+<h2>&nbsp;wishing Philipp many happy returns</h2>
+<img src="tex/flam.gif" id="flame"/>
+<span class="h" id="t1">zany</span>
+<span class="h" id="t2">crafty</span>
+<span class="h" id="t3">streetsmart</span>
+<div id="twitter-share"><a href="https://twitter.com/share" data-text="@philippkueng happy birthday! #datakake" class="twitter-share-button" data-count="vertical" data-related="loleg">Tweet</a></div><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<style type="text/css"> 
+body {
+	background:#226;
+	margin:0; padding:0; overflow:hidden;
+}
+canvas {
+	cursor:pointer;
+}
+#flame {
+	position:absolute;
+	left:50%; top:22%;
+	margin-left:-30px;
+}
+span.h {
+	position:absolute;
+	left:4%;
+	font:22pt tahoma,sans-serif;
+	color:#eee;
+	opacity:0.7;
+	border-bottom:1px solid #eee;
+	width:30%;
+}
+#t1 { top:45%; }
+#t2 { top:60%; }
+#t3 { top:75%; }
+#twitter-share {
+	position:absolute;
+	right:4%; top:3%;
+}
+#twitter-list {
+	position:absolute;
+	right:1%; top:20%;
+	overflow:hidden;
+	width:300px; height:60%;
+	z-index:-1;
+}
+#twitter-list a {
+	display:block;
+	font:11pt sans-serif;
+	color:#c9f;
+	text-decoration:none;
+	margin-bottom:1em;
+	height:1em; overflow:hidden;
+}
+h1 {
+	position:absolute;
+	font:bold 24pt comic sans ms,sans-serif;
+	text-decoration:none;
+	color:#ffc;
+	left:50%; top:0;
+	margin-left:-5.9em;
+}
+h2 {
+	position:absolute;
+	text-align:center;
+	font:15pt monospace,sans-serif;
+	color:#a77;
+	left:50%; top:7%;
+	margin-left:-9em;
+}
+h2 a {
+	color:white;
+	text-decoration:none;
+}
+</style> 
+</body> 
+</html> 
