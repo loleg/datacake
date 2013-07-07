@@ -59,8 +59,7 @@ sm = soundManager.setup({
 				}
 			}
 			renderer.setClearColor({ r: 0, g: 0, 
-				b: 0.2 + (this.peakData.right / 4)
-			});
+				b: 0.2 + (this.peakData.right / 4) }, 0.2);
 		}
 	  }
 	});
@@ -220,7 +219,7 @@ function init() {
  	// -- Rest of 3D setup
 	projector = new THREE.Projector();
 
-	renderer = new THREE.WebGLRenderer({ antialias: false, clearAlpha: 1 });
+	renderer = new THREE.WebGLRenderer({ antialias: false, clearAlpha: 0.6 });
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	container.appendChild( renderer.domElement );
 
@@ -418,11 +417,11 @@ function render() {
 
 </script>
 <h1>"LET THERE BE DATAKAKE"</h1>
-<h2>&nbsp;wishing Philipp many happy returns</h2>
+<h2>&nbsp; many happy returns, Philipp</h2>
 <img src="tex/flam.gif" id="flame"/>
-<span class="h" id="t1">zany</span>
-<span class="h" id="t2">crafty</span>
-<span class="h" id="t3">streetsmart</span>
+<span class="h" id="t1">&#21811;</span>
+<span class="h" id="t2">&#9730;</span>
+<span class="h" id="t3">&#9762;</span>
 <div id="twitter-share"><a href="https://twitter.com/share" data-text="@philippkueng happy birthday! #datakake" class="twitter-share-button" data-count="vertical" data-related="loleg">Tweet</a></div><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
 <h5> 
 &#9834; <a href="https://soundcloud.com/mentalgroove/borderless-i" target="_blank">Pedro Magina - Borderless I</a> &copy; Mental Groove Records
@@ -430,7 +429,8 @@ function render() {
 </h5> 
 <style type="text/css"> 
 body {
-	background:#226;
+	background:#111 url(img/cracked_concrete_title.jpg) no-repeat center;
+	background-size:100% auto;
 	margin:0; padding:0; overflow:hidden;
 }
 canvas {
@@ -478,13 +478,13 @@ h1 {
 	text-decoration:none;
 	color:#ffc;
 	left:50%; top:0;
-	margin-left:-5.9em;
+	margin-left:-6.6em;
 }
 h2 {
 	position:absolute;
 	text-align:center;
 	font:15pt monospace,sans-serif;
-	color:#a77;
+	color:#fee;
 	left:50%; top:7%;
 	margin-left:-9em;
 }
