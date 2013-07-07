@@ -3,12 +3,14 @@
 <head> 
 <title>datakake</title> 
 
-<script language="JavaScript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>  
+<!-- Three.js -->
 <script type="text/javascript" src="lib/Three.js"></script>
-
 <script type="text/javascript" src="lib/RequestAnimationFrame.js"></script> 
 <script type="text/javascript" src="lib/Stats.js"></script> 
 <script type="text/javascript" src="lib/Detector.js"></script> 
+
+<!-- soundManager -->
+<script type="text/javascript" src="lib/soundmanager2-jsmin.js"></script>
 
 </head> 
 <body> 
@@ -16,8 +18,8 @@
 
 Data Kake
 
-THREE.js by mrdoob is used for WebGL graphics
-SoundManager for the live chemical beats
+THREE.js used for WebGL graphics
+SoundManager2.js for live chemical beats
  
 Contact: @loleg http://oleg.utou.ch
  
@@ -26,6 +28,44 @@ http://creativecommons.org/licenses/by/3.0/
 -->
 
 <script> 
+
+var cakeGeom = [], 
+	cakeSound = null,
+	fadeInStart = false;
+
+sm = soundManager.setup({
+  url: 'lib/swf/',
+  flashVersion: 9,
+  preferFlash: true,
+  onready: function() {
+    cakeSound = soundManager.createSound({
+	  id: 'jsdh',
+	  url: 'mp3/OGsM.mp3',
+	  autoLoad: true,
+	  autoPlay: true,
+  	  usePeakData: true,
+	  onload: function() {
+		soundManager._writeDebug("Flash version: " + sm.flashVersion);
+		setTimeout(function() { fadeInStart = true; }, 25000);
+	  },
+	  whileplaying: function() {
+		if (cakeGeom != null) {
+			cakeGeom[2].scale.z = 1 + this.peakData.right;
+			cakeGeom[1].scale.z = 1 + this.peakData.left;
+			cakeGeom[0].scale.z = 1 + this.peakData.right + this.peakData.left;
+			if (fadeInStart && cakeGeom[0].materials[0].opacity < 0.9) { 
+				for (var i = 0; i<3; i++) {
+					cakeGeom[i].materials[0].opacity += 0.02;
+				}
+			}
+			renderer.setClearColor({ r: 0, g: 0, 
+				b: 0.2 + (this.peakData.right / 4)
+			});
+		}
+	  }
+	});
+  }
+});
 
 // grab some data
 
@@ -51,7 +91,7 @@ var camera, scene, projector, renderer;
 var uniforms, material, mesh, particleMaterial;
 var timer;
 
-var targetRotation = 0;
+var targetRotation = -3.14;
 var targetRotationOnMouseDown = 0;
 
 var mouseX = 0;
@@ -142,8 +182,12 @@ function init() {
 			}
 		}
 		
-		addGeometry( arc3d, arcPoints, arcSpacedPoints, layerColor,  0, 0, 50 + i*layerDepth, 0, 0, 0, 1 );
-		
+		// add to stack
+		cakeGeom.push(addGeometry( arc3d, arcPoints, arcSpacedPoints, layerColor,  0, 0, 50 + i*layerDepth, 0, 0, 0, 1 ));	
+	}
+	
+	for (var i=0; i<3; i++) {
+		cakeGeom[i].materials[0].opacity = 0;
 	}
 	
 	// Candle
@@ -158,7 +202,7 @@ function init() {
 	var arcSpacedPoints = arcShape.createSpacedPointsGeometry();
 	
 	extrudeSettings = {	amount: 10,  bevelEnabled: false, bevelSegments: 1, steps: 1 };
-	addGeometry( arc3d, arcPoints, arcSpacedPoints, 0xffffff,  0, 0, 76, 0, 0, 0, 2 );
+	addGeometry( arc3d, arcPoints, arcSpacedPoints, 0xffffff,  0, 0, 81, 0, 0, 0, 2 );
 	
 	// Lights
 	
@@ -176,7 +220,7 @@ function init() {
  	// -- Rest of 3D setup
 	projector = new THREE.Projector();
 
-	renderer = new THREE.WebGLRenderer({ antialias: false });
+	renderer = new THREE.WebGLRenderer({ antialias: false, clearAlpha: 1 });
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	container.appendChild( renderer.domElement );
 
@@ -346,7 +390,7 @@ function animate() {
 
 	render();
 	stats.update();
-
+	
 }
 
 function render() {
@@ -371,7 +415,7 @@ function render() {
 	renderer.render( scene, camera );
 
 }
- 
+
 </script>
 <h1>"LET THERE BE DATAKAKE"</h1>
 <h2>&nbsp;wishing Philipp many happy returns</h2>
@@ -380,6 +424,10 @@ function render() {
 <span class="h" id="t2">crafty</span>
 <span class="h" id="t3">streetsmart</span>
 <div id="twitter-share"><a href="https://twitter.com/share" data-text="@philippkueng happy birthday! #datakake" class="twitter-share-button" data-count="vertical" data-related="loleg">Tweet</a></div><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+<h5> 
+&#9834; <a href="https://soundcloud.com/mentalgroove/borderless-i" target="_blank">Pedro Magina - Borderless I</a> &copy; Mental Groove Records
+&#9733; Datakake 2.0 by <a href="http://twitter.com/loleg" target="_blank">@loleg</a>
+</h5> 
 <style type="text/css"> 
 body {
 	background:#226;
@@ -390,7 +438,7 @@ canvas {
 }
 #flame {
 	position:absolute;
-	left:50%; top:22%;
+	left:49.5%; top:17%;
 	margin-left:-30px;
 }
 span.h {
@@ -443,6 +491,15 @@ h2 {
 h2 a {
 	color:white;
 	text-decoration:none;
+}
+h5, h5 a {
+	color: #66a;
+	font: 9pt sans-serif;
+}
+h5 {
+	position: absolute;
+	bottom: 0;
+	right: 2em;
 }
 </style> 
 </body> 
