@@ -226,6 +226,8 @@ function init() {
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.top = '0px';
+	// HIDE FROM EYES
+	stats.domElement.style.visibility = 'hidden';
 	container.appendChild( stats.domElement );
 
 	onWindowResize();
@@ -416,7 +418,7 @@ function render() {
 }
 
 </script>
-<h1>"LET THERE BE DATAKAKE"</h1>
+<h1>"LET THERE BE <a href="http://www.youtube.com/watch?v=YJNueZfOUlo&feature=youtu.be&t=21m0s" target="_blank">#DATAKAKE</a>"</h1>
 <h2>&nbsp; many happy returns, Philipp</h2>
 <img src="tex/flam.gif" id="flame"/>
 <span class="h" id="t1">&#21811;</span>
@@ -430,7 +432,7 @@ function render() {
 <style type="text/css"> 
 body {
 	background:#111 url(img/cracked_concrete_title.jpg) no-repeat center;
-	background-size:100% auto;
+	background-size:auto 100%;
 	margin:0; padding:0; overflow:hidden;
 }
 canvas {
@@ -472,13 +474,14 @@ span.h {
 	margin-bottom:1em;
 	height:1em; overflow:hidden;
 }
+h1, h1 a {
+	font:bold 24pt comic sans ms,sans-serif;
+	color:#ffc;
+}
 h1 {
 	position:absolute;
-	font:bold 24pt comic sans ms,sans-serif;
-	text-decoration:none;
-	color:#ffc;
 	left:50%; top:0;
-	margin-left:-6.6em;
+	margin-left:-7em;
 }
 h2 {
 	position:absolute;
